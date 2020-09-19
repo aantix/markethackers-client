@@ -1,0 +1,7 @@
+# This will scan for all stocks with 30 period moving average volume
+#   of greater than 400000.
+stock.simple_moving_average(period: 30, value_key: :volume).today > 400000 &&
+
+# .. then scan for all stocks with 30 period moving average (closing price)
+#   that has increased from the previous period.
+stock.simple_moving_average(period: 30, value_key: :close).today > stock.simple_moving_average(period: 30, value_key: :volume).yesterday

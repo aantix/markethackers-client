@@ -1,0 +1,20 @@
+#!/usr/bin/env ruby
+
+require "bundler/setup"
+require "markethackers/client"
+
+action = ARGV[0]&.downcase&.strip
+
+if action.nil?
+  Markethackers::Setup.instructions
+  exit!(1)
+end
+
+case action
+  when 'setup'
+    Markethackers::Setup.new.start
+  when 'generate'
+    Markethackers::Generate::Scans.new(ARGV[1], ARGV[2]).generate
+  when 'run'
+    Markethackers::Engine::Runnner.new(ARGV[1], ARGV[2]).run
+end

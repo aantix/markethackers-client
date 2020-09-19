@@ -1,0 +1,21 @@
+# Approximate how much volume occurred the day before at the same time of day
+#  Since we don't have intraday bars, we just divide the volume equally across one minute
+#  bars, see how many bars we are into the current day, and compare.
+#
+# Looking for today's intraday volume level at 50% greater than yesterdays
+
+market_open  = Time.find_zone("Eastern Time (US & Canada)").parse("9:30am")
+market_close = Time.find_zone("Eastern Time (US & Canada)").parse("9:30am")
+now          = Time.now
+
+minutes_since_open  = ((now - market_open) / 1.minutes).round
+trading_day_minutes = ((market_close - market_open) / 1.minutes).round
+
+volume_level_yesterday_same_time = (stock.yesterday.volume / trading_day_minutes) * minutes_since_open
+
+(stock.today.volume * 1.50) > volume_level_yesterday_same_time &&
+
+# .. and only stocks that open 10% above
+#   yesterday's closing price.
+(stock.today.open * 1.1) > stock.yesterday.close
+

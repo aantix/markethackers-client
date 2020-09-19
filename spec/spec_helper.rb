@@ -1,5 +1,5 @@
 require "bundler/setup"
-require "markethackers/ib/client"
+require "markethackers/client"
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure
@@ -11,4 +11,11 @@ RSpec.configure do |config|
   config.expect_with :rspec do |c|
     c.syntax = :expect
   end
+end
+
+VCR.configure do |config|
+  config.configure_rspec_metadata!
+  config.default_cassette_options = {:record => :new_episodes}
+  config.hook_into :webmock
+  config.cassette_library_dir = "spec/cassettes"
 end
