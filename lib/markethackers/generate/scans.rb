@@ -1,5 +1,6 @@
 require 'erb'
 
+
 module Markethackers
   module Generate
     class Scans
@@ -9,11 +10,10 @@ module Markethackers
       
       attr_accessor :name, :remote_script_template, :local_script_template
 
-      def initialize(template_name, name, remote_script, local_script)
+      def initialize(template_name, name)
         @name = name
-        raise ArgumentError("Must provide a name for the scan.") if name.nil?
-
-        raise ArgumentError("Must specify a template.") if template_name.nil?
+        raise ArgumentError.new("Must provide a name for the scan.") if name.nil?
+        raise ArgumentError.new("Must specify a template.") if template_name.nil?
 
         @remote_script_template = File.join(TEMPLATE_DIR, "remote", "#{template_name}.erb")
         @local_script_template  = File.join(TEMPLATE_DIR, "local", "#{template_name}.erb")
@@ -35,13 +35,14 @@ module Markethackers
       private
       def generate_remote
         client   = Markethackers::Client::Scan.new(name,
-                                         rendered(remote_script_template))
+                     rendered(remote_script_template, linefeed: "<br/>"))
         scan_id  = client.create
-        puts "scan_id = #{scan_id}"
-        
+
         scan_id
-      rescue StandardError
-        return nil
+      rescue StandardError => e
+        puts "Problem creating the remote scan on Market Hackers."
+        puts
+        raise e
       end
 
       def generate_local(id)
@@ -51,12 +52,14 @@ module Markethackers
         local_script_path = "#{Dir.pwd}/#{title}.rb"
         File.write(local_script_path, rendered(local_script_template))
         local_script_path
-      rescue StandardError
-        return nil
+      rescue StandardError => e
+        puts "Problem generating the local script."
+        puts
+        raise e
       end
 
-      def rendered(path)
-        renderer = ERB.new(File.read(path).gsub("\n", "<br/>"))
+      def rendered(path, linefeed: "\n")
+        renderer = ERB.new(File.read(path).gsub("\n", linefeed))
         renderer.result(binding)
       end
     end

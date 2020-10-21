@@ -56,7 +56,7 @@ module Markethackers
       puts "Here are the common steps:"
       puts
       puts "1) run: mh setup"
-      puts "2) run: mh generate \"My First Scan\""
+      puts "2) run: mh generate breakout \"My First Scan\""
       puts "3) Modify your daily scan at https://www.markethackers.com/scans"
       puts "4) Edit my_first_scan.erb to load your candidates into Interactive Brokers"
       puts "5) run: mh run my_first_scan.rb"

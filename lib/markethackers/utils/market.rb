@@ -5,6 +5,16 @@ module Markethackers
 
       OPEN  = Time.ZONE.parse("9:30am")
       CLOSE = Time.ZONE.parse("4:00pm")
+
+      def self.open?
+        now = ZONE.now
+
+        now > OPEN && now < CLOSE
+      end
+
+      def self.closed?
+        !open?
+      end
     end
   end
 end

@@ -3,10 +3,10 @@ module Markethackers
     SETTINGS_FILE = "#{Dir.home}/.markethackers"
 
     def url
-      @url||=if defined?(Rails) && Rails.env == 'production'
-               "https://www.markethackers.com/"
-             else
+      @url||=if ENV['MARKETHACKERS_LOCAL'].present?
                "http://localhost:5000/"
+             else
+               "https://www.markethackers.com/"
              end
     end
 

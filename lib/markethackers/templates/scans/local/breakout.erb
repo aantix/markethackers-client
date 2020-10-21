@@ -1,5 +1,7 @@
 # Grab the scan results from your Market Hacker scan and
 #  load the positions into Interactive Brokers.
+scan_name = '<%= name %>'
+
 before do |scan|
   broker.clear_pending_buy_orders
 end

@@ -8,11 +8,11 @@ module Markethackers
 
       def initialize(remote_scan, local_scan)
         @remote_scan = remote_scan
-        raise ArgumentError("Must provide the name of the remote scan.\n" \
-                            "Go to https://www.markethackers.com/scans") if remote_scan.nil?
+        raise ArgumentError.new("Must provide the name of the remote scan.\n" \
+                                "Go to https://www.markethackers.com/scans") if remote_scan.nil?
 
         @local_scan  = local_scan
-        raise ArgumentError("Must provide the the path to the scan.") if local_scan.nil?
+        raise ArgumentError.new("Must provide the the path to the scan.") if local_scan.nil?
 
         @script      = File.read(local_scan)
       end

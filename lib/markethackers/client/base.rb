@@ -22,7 +22,7 @@ module Markethackers
       end
 
       def get(url, params = {})
-        connection.get(url, params.to_json, headers)
+        connection.get(url, params, headers)
       end
 
       def post(url, params = {})

@@ -4,9 +4,9 @@
 #
 # Looking for today's intraday volume level at 50% greater than yesterdays
 
-market_open  = Time.find_zone("Eastern Time (US & Canada)").parse("9:30am")
-market_close = Time.find_zone("Eastern Time (US & Canada)").parse("9:30am")
-now          = Time.now
+market_open  = Markethackers::Utils::Market::OPEN
+market_close = Markethackers::Utils::Market::CLOSE
+now          = Markethackers::Utils::Market::ZONE.now
 
 minutes_since_open  = ((now - market_open) / 1.minutes).round
 trading_day_minutes = ((market_close - market_open) / 1.minutes).round

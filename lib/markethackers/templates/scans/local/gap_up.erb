@@ -1,24 +1,26 @@
 # Grab the scan results from your Market Hacker scan and
 #  load the positions into Interactive Brokers.
+scan_name = '<%= name %>'
 
-before do |scan|
-  broker.clear_pending_buy_orders
-end
+broker = Markethackers::Brokers::InteractiveBrokers::Client.new
+broker.clear_pending_buy_orders
 
-received do |result|
-  symbol                = result[:symbol]
-  entry_price           = result[:price] * 1.10
+scan_result_id     = MarketHackers::Client::Scan.new(scan_name).run
+scan_result_client = MarketHackers::Client::ScanResults.new(scan_result_id)
+scan_result_client.wait_until_completed
+
+scan_result_client.results do |result|
+  symbol                = result["symbol"]
+  entry_price           = result["price"] * 1.10
   shares                = 100
-  volume_entry_level    = result[:volume_30_sma] * 1.5
+  volume_entry_level    = result["volume_30_sma"] * 1.5
   trailing_stop_percent = 0.07
 
   broker.buy_stock_with_trailing_stop_loss(stock: symbol,
-                                entry_price: entry_price,
-                                num_shares: shares,
-                                volume_level: volume_entry_level,
-                                trailing_percent: trailing_stop_percent)
+                                            entry_price: entry_price,
+                                            num_shares: shares,
+                                            volume_level: volume_entry_level,
+                                            trailing_percent: trailing_stop_percent)
 end
 
-after do |scan|
-  puts "Finished scan at #{Time.now}"
-end
+puts "Finished scan at #{Time.now}"

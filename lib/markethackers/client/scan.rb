@@ -18,7 +18,7 @@ module Markethackers
       end
 
       def run
-        resp = post(RUN_URL.gsub(:id, name))
+        resp = get(RUN_URL.gsub(/:id/, URI.encode(name)), {})
 
         resp.body["id"]
       end
