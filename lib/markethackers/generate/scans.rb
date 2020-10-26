@@ -1,6 +1,5 @@
 require 'erb'
 
-
 module Markethackers
   module Generate
     class Scans
@@ -11,6 +10,8 @@ module Markethackers
       attr_accessor :name, :remote_script_template, :local_script_template
 
       def initialize(template_name, name)
+        read_settings
+        
         @name = name
         raise ArgumentError.new("Must provide a name for the scan.") if name.nil?
         raise ArgumentError.new("Must specify a template.") if template_name.nil?

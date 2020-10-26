@@ -7,21 +7,31 @@ module Markethackers
     attr_accessor :client
 
     def initialize
+      read_settings
+    end
+    
+    def client
       @client = Markethackers::Client::Authenticate.new
     end
-
+    
     def start
-      email      = prompt("Enter Market Hackers account email:")
-      password   = prompt("Enter Market Hackers account password:")
-      account_id = prompt("Enter Interactive Brokers account id:")
-      port       = prompt("Enter Interactive Brokers TWS port:").to_i
+      # email      = prompt("Enter Market Hackers account email:")
+      # password   = prompt("Enter Market Hackers account password:")
+      # account_id = prompt("Enter Interactive Brokers account id:")
+      # port       = prompt("Enter Interactive Brokers TWS port:").to_i
 
-      # email      = "jim.jones1@gmail.com"
-      # password   = "testme10"
-      # account_id = "XXXYYY"
-      # port       = 4002
+      url = if production? && ENV['MARKETHACKERS_LOCAL_TEST'].nil?
+              PRODUCTION_URL
+            else
+              prompt("Enter URL for #{Markethackers.environment} API calls [#{PRODUCTION_URL}]:") || PRODUCTION_URL
+            end
 
-      save(email, password, account_id, port)
+      email      = "jim.jones1@gmail.com"
+      password   = "testme10"
+      account_id = "XXXYYY"
+      port       = 4002
+
+      save(email, password, account_id, port, url)
 
       puts "Authentication successful."
       puts "Settings saved to #{SETTINGS_FILE}"
@@ -34,6 +44,7 @@ module Markethackers
       value = STDIN.gets.chomp
       puts
 
+      return nil if value == ''
       value
     end
 
@@ -41,13 +52,24 @@ module Markethackers
       client.login(email, password)
     end
 
-    def save(email, password, account_id, port)
-      properties = {settings:
-                      { auth_token: token(email, password),
-                        ib_account_id: account_id,
-                        ib_port: port }}
+    def save(email, password, account_id, port, url)
+      props = { auth_token: '',
+                    ib_account_id: account_id,
+                    ib_port: port,
+                    url: url
+                  }
 
-        write_settings(properties)
+      props = {Markethackers.environment => {
+          settings: props
+      }}
+
+      write_settings(complete_settings.merge(props))
+
+      props[Markethackers.environment][:settings][:auth_token] = token(email, password)
+
+      write_settings(complete_settings.merge(props))
+
+      read_settings
     rescue Errno::ENOENT
       return nil
     end
@@ -61,10 +83,13 @@ module Markethackers
       puts "4) Edit my_first_scan.erb to load your candidates into Interactive Brokers"
       puts "5) run: mh run my_first_scan.rb"
       puts
-      puts "Issues and pull requests welcomed at:"
-      puts "  https://github.com/aantix/markethackers-client"
       puts
-      puts "- Jim Jones jim@markethackers.com"
+      puts "You can have multiple environments. The :production section contains your live Market Hackers credentials."
+      puts " By setting the MARKETHACKERS_ENV envrionment you can maintain multiple settings for IB in case"
+      puts " you want to try out your scans in paper trading mode."
+      puts
+      puts
+      puts "Questions? Create an issue: https://github.com/aantix/markethackers-client/issues"
     end
   end
 end

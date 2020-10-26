@@ -7,6 +7,10 @@ module Markethackers
     class Base
       include Markethackers::Settings
 
+      def initialize
+        read_settings
+      end
+
       def connection
         @connection||=Faraday.new(url) do |c|
           c.use FaradayMiddleware::ParseJson,       content_type: 'application/json'

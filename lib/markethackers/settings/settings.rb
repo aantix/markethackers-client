@@ -1,13 +1,17 @@
 module Markethackers
   module Settings
-    SETTINGS_FILE = "#{Dir.home}/.markethackers"
+    extend ActiveSupport::Concern
+
+    included do |base|
+      attr_accessor :settings
+    end
+
+    SETTINGS_FILE          = "#{Dir.home}/.markethackers"
+    PRODUCTION_URL         = "https://www.markethackers.com"
+    PRODUCTION_ENVIRONMENT = "production"
 
     def url
-      @url||=if ENV['MARKETHACKERS_LOCAL'].present?
-               "http://localhost:5000/"
-             else
-               "https://www.markethackers.com/"
-             end
+      settings[:url]
     end
 
     def ib_account_id
@@ -34,15 +38,24 @@ module Markethackers
       ib_account_id.present?
     end
 
-    def write_settings(new_settings)
-      File.write(SETTINGS_FILE, new_settings.to_yaml)
-      settings
+    def production?
+      Markethackers.environment == PRODUCTION_ENVIRONMENT.parameterize(separator: '_').to_sym
     end
 
-    def settings
-      @settings||=YAML.load(File.read(Markethackers::Client::Base::SETTINGS_FILE))[:settings]
-    rescue StandardError
+    def write_settings(new_settings)
+      File.write(SETTINGS_FILE, new_settings.to_yaml)
+    end
+
+    def read_settings
+      @settings = complete_settings.dig(Markethackers.environment, :settings)
+    rescue StandardError => e
+      puts e.full_message
+      puts e.backtrace.join("\n")
       return {}
+    end
+
+    def complete_settings
+      YAML.load(File.read(Markethackers::Client::Base::SETTINGS_FILE)) rescue {}
     end
   end
 end

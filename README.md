@@ -25,9 +25,39 @@ then
 
 From the command-line, setup the Market Hackers client with `mh setup`.
 
-Be sure to have the IB Gateway application running on your computer. 
+This will prompt you for your Market Hacker email/password for login,
+your Interactive Brokers account ID, and the Interactive Brokers API port.
 
-From the settings, enable "API->Active X socket connections". Hit apply then save.
+You can have multiple environments by setting the 'MARKETHACKERS_ENV' envrionment variable.
+If it's unset, it defaults to 'production'.
+
+Typically, it's useful to have a second environment (e.g. test) with a different IB port setting for paper trading
+vs live trading.
+
+A sample `~/.markethackers` yml config file after running `mh setup`:
+
+```
+---
+:production:
+  :settings:
+    :auth_token: TSDSDSoSFDFDDFYzFyFPna
+    :ib_account_id: XXXYYY
+    :ib_port: 4002
+    :url: http://localhost:5000
+:test:
+  :settings:
+    :auth_token: TSDSDSoSFDFDDFYzFyFPna
+    :ib_account_id: XXXYYY
+    :ib_port: 4002
+    :url: http://localhost:5000
+```
+To retrieve your Interactive Brokers port value, start the TWS Trader's Workstation application. 
+
+From the settings, click API, you should see your port number.
+
+Also, make sure to enable "API->Active X socket connections". 
+
+Hit apply then save.
 
 ## Creating a Scan
 
