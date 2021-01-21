@@ -3,7 +3,8 @@ require 'yaml'
 module Markethackers
   class Setup
     include Markethackers::Settings
-    
+    extend Markethackers::Settings
+
     attr_accessor :client
 
     def initialize
@@ -75,13 +76,16 @@ module Markethackers
     end
 
     def self.instructions
-      puts "Here are the common steps:"
+      read_settings
+      puts "environment : #{Markethackers.environment}"
       puts
-      puts "1) run: mh setup"
-      puts "2) run: mh generate breakout \"My First Scan\""
-      puts "3) Modify your daily scan at https://www.markethackers.com/scans"
-      puts "4) Edit my_first_scan.erb to load your candidates into Interactive Brokers"
-      puts "5) run: mh run my_first_scan.rb"
+      puts "Instructions: "
+      puts
+      puts "  1. > mh setup"
+      puts "  2. > mh generate breakout \"My First Scan\""
+      puts "  3. Modify your daily scan at #{url}/scans"
+      puts "  4. Edit my_first_scan.erb to load your candidates into Interactive Brokers"
+      puts "  5. > mh run my_first_scan.rb"
       puts
       puts
       puts "You can have multiple environments. The :production section contains your live Market Hackers credentials."

@@ -55,7 +55,11 @@ To retrieve your Interactive Brokers port value, start the TWS Trader's Workstat
 
 From the settings, click API, you should see your port number.
 
-Also, make sure to enable "API->Active X socket connections". 
+Also, make sure to enable "API->Active X socket connections".
+
+Be sure to uncheck the "API->Readonly API" option.
+
+Uncheck the "API->Precautions->Bypass Order Precautions for API Orders" 
 
 Hit apply then save.
 

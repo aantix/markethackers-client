@@ -24,10 +24,10 @@ module Markethackers
         scan_id      = generate_remote
         local_script = generate_local(scan_id)
 
-        puts "Your Market Hackers scan has been created : #{url}scans/#{scan_id}"
+        puts "Your Market Hackers scan has been created : #{url}/scans/#{scan_id}"
         puts "  Use this to look for next day, potentional stock candidates."
         puts
-        puts "Your local scan script was created at #{local_script}."
+        puts "Your local scan script was created at : #{local_script}."
         puts "  Use this to take the candidates from your Market Hacker scan"
         puts "  and load those candidates into Interactive Brokers for possible trades."
         puts "  This is where you will control your market/limit/stop orders."

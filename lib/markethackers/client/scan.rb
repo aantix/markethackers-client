@@ -7,6 +7,8 @@ module Markethackers
       attr_accessor :name, :script
 
       def initialize(name, script = nil)
+        super()
+        
         @name   = name
         @script = script
       end

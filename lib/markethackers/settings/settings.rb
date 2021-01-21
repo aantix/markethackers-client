@@ -4,6 +4,7 @@ module Markethackers
 
     included do |base|
       attr_accessor :settings
+      cattr_accessor :settings
     end
 
     SETTINGS_FILE          = "#{Dir.home}/.markethackers"
@@ -47,7 +48,7 @@ module Markethackers
     end
 
     def read_settings
-      @settings = complete_settings.dig(Markethackers.environment, :settings)
+      @@settings = @settings = complete_settings.dig(Markethackers.environment, :settings)
     rescue StandardError => e
       puts e.full_message
       puts e.backtrace.join("\n")
