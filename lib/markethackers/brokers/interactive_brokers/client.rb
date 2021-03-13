@@ -15,15 +15,14 @@ module Markethackers
           @port          = ib_port
           @account_value = nil
 
-          @ib = IB::Connection.new( port: port ) do | gw |
+          @ib = IB::Connection.new(port: port ) do | gw |
             gw.subscribe(:AccountValue) { |msg| @account_value = msg.account_value }
-            # gw.subscribe(:OrderStatus) { |msg| puts "Order status: #{msg.order}" }
+            gw.subscribe(:OrderStatus) { |msg| puts "Order status: #{msg.to_human}" }
             gw.subscribe(:OpenOrderEnd) { |msg| puts "Placed: #{msg.to_human}" }
-            # gw.subscribe(:ExecutionData) { |msg| puts "Filled: #{msg.execution}" }
-            gw.subscribe(:Alert, :OpenOrder, :OrderStatus) { |msg| puts msg.to_human }
-            # gw.subscribe(:Alert){ |msg| puts msg.to_human }
+            gw.subscribe(:ExecutionData) { |msg| puts "Filled: #{msg.to_human}" }
+            gw.subscribe(:Alert, :OpenOrder, :OrderStatus, :ManagedAccounts) { |msg| puts msg.to_human }
             gw.subscribe(:AccountSummary){ |msg| @account_value = msg.account_value }
-            
+
             gw.subscribe(:ContractData ) do |msg|
               puts msg.contract.to_human + "\n"
             end
@@ -56,36 +55,37 @@ module Markethackers
         end
 
         def buy_stock_with_trailing_stop_loss(stock:,
-                                              entry_price:, num_shares:,
-                                              volume_level:, trailing_percent:)
+                                              entry_price:,
+                                              num_shares:,
+                                              stop_price:,
+                                              trailing_percent:)
           ib.send_message :RequestAccountData, account_code: account_id
           ib.wait_for :AccountDownloadEnd
 
-          puts "1111"
           symbol    = IB::Stock.new symbol: stock
-          #symbol    = IB::Stock.new symbol: stock
-          # symbol = IB::Symbols::Stocks[stock.downcase.to_sym]
-          # ib.send_message :RequestContractData, id: 100, contract: symbol
-          ib.wait_for :ContractDataEnd
-          ib.wait_for :NextValidId
-
-          puts "22222"
-          buy_order = IB::Limit.order price: entry_price,
-                                      size: num_shares,
-                                      action: :buy,
-                                      account: account_id,
-                                      conditions: [ IB::VolumeCondition.fabricate( symbol, ">=" , volume_level),
-                                                    IB::TimeCondition.fabricate( "<=" , Date.today + 6.days ) ]
-
-          puts "33333"
+          buy_order = IB::Order.new  limit_price: entry_price,
+                                     order_type: 'LMT',
+                                     total_quantity: num_shares,
+                                     action: :buy
           ib.place_order buy_order, symbol
-          #
-          # puts "44444"
-          # ib.wait_for :NextValidId
-          # puts "5555"
-          # ib.wait_for :ContractDataEnd, 10 #sec
 
-          # puts "66666"
+
+          sell_order_profit = IB::Order.new  limit_price: stop_price,
+                                     order_type: 'STP LMT',
+                                     total_quantity: num_shares,
+                                     action: :sell,
+                                     parent_id: buy_order.local_id
+          ib.place_order sell_order_profit, symbol
+
+          # https://github.com/ib-ruby/ib-api/blob/31884e8065aeb085ba63eb1550e845f4e5f4070e/lib/models/ib/order.rb#L21
+          # Protect the loss
+          sell_order_loss = IB::Order.new  trailing_percent: trailing_percent,
+                                             order_type: 'TRAIL',
+                                             total_quantity: num_shares,
+                                             action: :sell,
+                                             parent_id: buy_order.local_id
+          ib.place_order sell_order_loss, symbol
+
           # stop_order = IB::TrailingStop.order action: :sell,
           #                                     tif: :good_till_cancelled,
           #                                     size: num_shares,
@@ -100,7 +100,7 @@ module Markethackers
           # ib.wait_for :NextValidId
           # puts "9999"
           # ib.wait_for :ContractDataEnd, 10 #sec
-          puts "101010101010"
+          # puts "101010101010"
 
           # ib.send_message :RequestAllOpenOrders
         end

@@ -1,4 +1,4 @@
-require 'ib-ruby'
+require 'ib-api'
 require "markethackers/settings/settings"
 require "markethackers/generate/scans"
 require "markethackers/setup"
@@ -6,6 +6,7 @@ require "markethackers/client/base"
 require "markethackers/client/authenticate"
 require "markethackers/client/scan"
 require "markethackers/client/scan_results"
+require "markethackers/client/trades"
 require "markethackers/client/version"
 require "markethackers/brokers/interactive_brokers/client"
 
