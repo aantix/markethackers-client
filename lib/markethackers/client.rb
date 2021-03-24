@@ -1,4 +1,5 @@
 require 'ib-api'
+require 'ib/extensions'
 require "markethackers/settings/settings"
 require "markethackers/generate/scans"
 require "markethackers/setup"

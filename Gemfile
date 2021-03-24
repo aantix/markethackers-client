@@ -5,6 +5,7 @@ git_source(:github) {|repo_name| "https://github.com/#{repo_name}" }
 gem 'faraday'
 gem 'faraday_middleware'
 gem 'ib-api', git: 'https://github.com/ib-ruby/ib-api', branch: 'master'
+gem 'ib-extensions'
 gem 'activesupport'
 gem 'ox'
 

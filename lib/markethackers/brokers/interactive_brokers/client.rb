@@ -6,8 +6,9 @@ module Markethackers
       class Client
         include Markethackers::Settings
 
-        attr_accessor :ib, :account_id, :port, :futures, :account_value
+        attr_accessor :ib, :account_id, :port, :futures, :total_cash
 
+        # https://interactivebrokers.github.io/tws-api/classIBApi_1_1EClient.html#a3e0d55d36cd416639b97ee6e47a86fe9
         def initialize
           read_settings
           
@@ -16,7 +17,6 @@ module Markethackers
           @account_value = nil
 
           @ib = IB::Connection.new(port: port ) do | gw |
-            gw.subscribe(:AccountValue) { |msg| @account_value = msg.account_value }
             gw.subscribe(:OrderStatus) { |msg| puts "Order status: #{msg.to_human}" }
             gw.subscribe(:OpenOrderEnd) { |msg| puts "Placed: #{msg.to_human}" }
             gw.subscribe(:ExecutionData) { |msg| puts "Filled: #{msg.to_human}" }
@@ -29,6 +29,17 @@ module Markethackers
           end
         end
 
+        def account_summary
+          req_id = ib.send_message :RequestAccountSummary,
+                                   tags: "TotalCashValue",
+                                   account_code: account_id
+
+          ib.wait_for :AccountSummaryEnd!
+          ib.send_message :CancelAccountSummary, id: req_id
+
+          @account_value.value.to_f
+        end
+
         # https://github.com/ib-ruby/ib-ruby/blob/master/example/account_summary
         def account_balance
           req_id = ib.send_message :RequestAccountSummary,
@@ -38,6 +49,17 @@ module Markethackers
           ib.wait_for :AccountSummaryEnd!
           ib.send_message :CancelAccountSummary, id: req_id
           
+          @account_value.value.to_f
+        end
+
+        def account_value
+          req_id = ib.send_message :RequestAccountSummary,
+                                   tags: "TotalCashValue",
+                                   account_code: account_id
+
+          ib.wait_for :AccountSummaryEnd!
+          ib.send_message :CancelAccountSummary, id: req_id
+
           @account_value.value.to_f
         end
 
@@ -54,55 +76,57 @@ module Markethackers
         def clear_pending_buy_orders
         end
 
-        def buy_stock_with_trailing_stop_loss(stock:,
-                                              entry_price:,
-                                              num_shares:,
-                                              stop_price:,
-                                              trailing_percent:)
+        def buy(stock:,
+                num_shares:,
+                entry_price:,
+                trailing_percent:,
+                profit_percent:)
+
+          # https://github.com/ib-ruby/ib-extensions/blob/master/examples/place_bracket_order
           ib.send_message :RequestAccountData, account_code: account_id
           ib.wait_for :AccountDownloadEnd
 
-          symbol    = IB::Stock.new symbol: stock
-          buy_order = IB::Order.new  limit_price: entry_price,
-                                     order_type: 'LMT',
-                                     total_quantity: num_shares,
-                                     action: :buy
+          symbol = IB::Stock.new symbol: stock
+          
+          buy_order = IB::Limit.order :total_quantity => num_shares,
+                                      :price => entry_price,
+                                      :action => :buy,
+                                      :algo_strategy => '',
+                                      :transmit => false,
+                                      account: account_id
+          ib.wait_for :NextValidId
+
+          stop_order = IB::TrailingStop.order :total_quantity => num_shares,
+                                              :trailing_percent => trailing_percent,
+                                              :trail_stop_price => entry_price,
+                                              :action => :sell,
+                                              :parent_id => buy_order.local_id,
+                                              account: account_id
+
+          profit_target = profit_target(entry_price, profit_percent)
+
+          profit_order = IB::Limit.order  :total_quantity => num_shares,
+                                          :price => profit_target,
+                                          :action => :sell,
+                                          :parent_id => buy_order.local_id,
+                                          account: account_id
+
           ib.place_order buy_order, symbol
 
+          stop_order.parent_id   = buy_order.local_id
+          profit_order.parent_id = buy_order.local_id
+          
+          ib.place_order stop_order, symbol
+          ib.place_order profit_order, symbol
 
-          sell_order_profit = IB::Order.new  limit_price: stop_price,
-                                     order_type: 'STP LMT',
-                                     total_quantity: num_shares,
-                                     action: :sell,
-                                     parent_id: buy_order.local_id
-          ib.place_order sell_order_profit, symbol
+          ib.send_message :RequestAllOpenOrders
+        end
 
-          # https://github.com/ib-ruby/ib-api/blob/31884e8065aeb085ba63eb1550e845f4e5f4070e/lib/models/ib/order.rb#L21
-          # Protect the loss
-          sell_order_loss = IB::Order.new  trailing_percent: trailing_percent,
-                                             order_type: 'TRAIL',
-                                             total_quantity: num_shares,
-                                             action: :sell,
-                                             parent_id: buy_order.local_id
-          ib.place_order sell_order_loss, symbol
+        private
 
-          # stop_order = IB::TrailingStop.order action: :sell,
-          #                                     tif: :good_till_cancelled,
-          #                                     size: num_shares,
-          #                                     trailing_percent: trailing_percent,
-          #                                     parent_id: buy_order.local_id,
-          #                                     trail_stop_price: buy_order.price,
-          #                                     account: account_id
-          #
-          # puts "7777"
-          # ib.place_order stop_order, symbol
-          # puts "88888"
-          # ib.wait_for :NextValidId
-          # puts "9999"
-          # ib.wait_for :ContractDataEnd, 10 #sec
-          # puts "101010101010"
-
-          # ib.send_message :RequestAllOpenOrders
+        def profit_target(entry_price, profit_percent)
+          target = entry_price * (1 + (profit_percent / 100))
+          (target * 20).round / 20.0
         end
       end
     end

@@ -4,12 +4,12 @@ module Markethackers
       URL = "/api/v1/trades.json"
       UPDATE_URL = "/api/v1/trades/%{trade_id}.json"
 
-      def results
+      def trades
         resp = get(URL)
         resp.body
       end
 
-      def processed(trade_id)
+      def processed!(trade_id)
         resp = post(trade_url(trade_id), trade: {processed: true})
         resp.body["id"]
       end

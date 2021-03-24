@@ -1,9 +1,9 @@
 GIT
   remote: https://github.com/ib-ruby/ib-api
-  revision: 045bb235304dad1fe2dfa55ae6eef0448b5f8c92
+  revision: d11d6c17504f822a14504e17d85bb3072fe984c4
   branch: master
   specs:
-    ib-api (972.1)
+    ib-api (972.2)
       activemodel
       activesupport (>= 6.0)
 
@@ -36,6 +36,8 @@ GEM
     hashdiff (1.0.1)
     i18n (1.8.8)
       concurrent-ruby (~> 1.0)
+    ib-extensions (1.0)
+      ox
     minitest (5.14.3)
     multipart-post (2.1.1)
     ox (2.14.1)
@@ -73,6 +75,7 @@ DEPENDENCIES
   faraday
   faraday_middleware
   ib-api!
+  ib-extensions
   markethackers-client!
   ox
   rake (~> 13)
