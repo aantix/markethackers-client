@@ -2,6 +2,9 @@
 
 require "bundler/setup"
 require "markethackers/client"
+require "markethackers/engine/runner"
+
+include Markethackers::Settings
 
 action = ARGV[0]&.downcase&.strip
 
@@ -10,11 +13,28 @@ if action.nil?
   exit!(1)
 end
 
+read_settings
+
 case action
+  when 'register'
+    `open #{settings.url || Markethackers::Settings::PRODUCTION_URL}/users/sign_up`
+
   when 'setup'
     Markethackers::Setup.new.start
+
   when 'generate'
     Markethackers::Generate::Scans.new(ARGV[1], ARGV[2]).generate
+
   when 'run'
-    Markethackers::Engine::Runnner.new(ARGV[1], ARGV[2]).run
+    subaction = ARGV[1]
+    run       = Markethackers::Engine::Runner.new
+
+    case subaction
+      when 'all'
+        run.all
+      when 'every'
+        run.add_script(ARGV[2], ARGV[3])
+      when 'remove'
+        run.remove_script(ARGV[2])
+    end
 end

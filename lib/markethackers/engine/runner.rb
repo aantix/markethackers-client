@@ -1,99 +1,60 @@
+require 'active_support/core_ext/date_time'
+
 module Markethackers
   module Engine
-    class Runnner
+    class Runner
       include Settings
 
-      attr_accessor :remote_scan, :local_scan, :script
-      attr_accessor :before_callback, :after_callback, :received_callback
+      attr_reader :last_ran
+      attr_reader :running
+      attr_reader :ractors
 
-      def initialize(remote_scan, local_scan)
-        @remote_scan = remote_scan
-        raise ArgumentError.new("Must provide the name of the remote scan.\n" \
-                                "Go to https://www.markethackers.com/scans") if remote_scan.nil?
+      def initialize
+        @last_ran = {}
+        @running  = {}
 
-        @local_scan  = local_scan
-        raise ArgumentError.new("Must provide the the path to the scan.") if local_scan.nil?
-
-        @script      = File.read(local_scan)
+        read_settings
       end
+      
+      def all
+        while true do
+          @ractors  = []
 
-      def uri
-        "ws://localhost:3000/cable/"
-      end
+          scripts.each do |interval, script|
+            next if too_soon?(interval, script)
+            next if running?(script)
 
-      def before
-        @before_callback = proc do
-          yield self
-        end
-      end
+            ractors << Ractor.new do
+              start_script(script)
 
-      def after
-        @after_callback = proc do
-          yield self
-        end
-      end
+              puts "Running #{script} (#{DateTime.now})"
+              load script
 
-      def receive(message)
-        @received_callback = proc do
-          yield message
-        end
-      end
-
-      def scan
-        self.scan_callback = proc do
-          yield
-        end
-      end
-
-      def broker
-        @broker||=Markethackers::Brokers::InteractiveBrokers::Client.new(account_id: ib_account_id,
-                                                                         port: ib_port)
-      end
-
-      def run
-        load_script_with_callbacks
-
-        scan_result_id =
-            Markethackers::Client::Scan.new(remote_scan).run
-
-        EventMachine.run do
-          client = ActionCableClient.new(uri, {channel: "ScanResultChannel",
-                                               scan_result_id: scan_result_id})
-
-          client.connected { puts 'Connected.' }
-
-          start
-
-          client.received do | message |
-            puts "Received #{message.inspect}"
-
-            case message['status']
-              when 'result'
-                result(message)
-              when 'complete'
-                complete
+              end_script(script)
             end
           end
+
+          sleep 1
         end
       end
 
       private
 
-      def start
-        before_callback&.call
+      def start_script(script)
+        last_ran[script] = DateTime.now
+        running[script]  = true
       end
 
-      def complete
-        after_callback&.call
-        EventMachine::stop_event_loop
+      def end_script(script)
+        running[script] = false
       end
 
-      def result(message)
-        received_callback&.call(message['json'])
+      def too_soon?(interval, script)
+        !!last_ran[script].try!(:before, 1.send(interval).ago)
       end
 
-      def load_script_with_callbacks
-        eval(script)
+      def running?(script)
+        running[script] == true
       end
     end
   end

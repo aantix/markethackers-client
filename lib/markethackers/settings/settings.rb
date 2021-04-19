@@ -27,6 +27,10 @@ module Markethackers
       settings[:auth_token]
     end
 
+    def scripts
+      settings[:scripts]
+    end
+
     def auth_token?
       auth_token.present?
     end
@@ -45,6 +49,29 @@ module Markethackers
 
     def write_settings(new_settings)
       File.write(SETTINGS_FILE, new_settings.to_yaml)
+    end
+
+    def add_script(interval, path)
+      temp_settings = complete_settings
+
+      temp_settings[Markethackers.environment][:scripts]||={}
+      temp_settings[Markethackers.environment][:scripts][interval]||=[]
+      temp_settings[Markethackers.environment][:scripts][interval] << path
+
+      write_settings(temp_settings)
+    end
+
+    def remove_script(match)
+      temp_settings = complete_settings
+      temp_settings[Markethackers.environment][:scripts].each do |interval, scripts|
+        scripts.each do |script|
+          if script =~ /#{match}/i
+            temp_settings[Markethackers.environment][:scripts][interval].delete(script)
+          end
+        end
+      end
+
+      write_settings(temp_settings)
     end
 
     def read_settings

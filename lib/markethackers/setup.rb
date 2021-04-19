@@ -55,10 +55,13 @@ module Markethackers
 
     def save(email, password, account_id, port, url)
       props = { auth_token: '',
-                    ib_account_id: account_id,
-                    ib_port: port,
-                    url: url
-                  }
+                ib_account_id: account_id,
+                ib_port: port,
+                url: url,
+                scripts: {
+                  minute: ["./scripts/process_orders.rb"]
+                }
+              }
 
       props = {Markethackers.environment => {
           settings: props
@@ -77,20 +80,52 @@ module Markethackers
 
     def self.instructions
       read_settings
-      puts "environment : #{Markethackers.environment}"
+      puts "loading environment #{Markethackers.environment}"
       puts
-      puts "Instructions: "
+      puts "Usage: "
       puts
-      puts "  1. > mh setup"
-      puts "  2. > mh generate breakout \"My First Scan\""
-      puts "  3. Modify your daily scan at #{url}/scans"
-      puts "  4. Edit my_first_scan.erb to load your candidates into Interactive Brokers"
-      puts "  5. > mh run my_first_scan.rb"
+      puts "  mh register"
+      puts "    Opens a browser window to register as a Market Hackers user."
+      puts 
+      puts "  mh setup"
+      puts "    Interactively prompts you for your Market Hackers username/password, "
+      puts "    your Interactive Brokers account id and port."
+      puts "    Stores auth details in ~/.markethackers "
+      puts
+      puts "  mh generate <template_nam> \"<title of scan>\""
+      puts "  mh generate breakout \"My First Scan\""
+      puts "    Generates a basic scan on the Market Hackers website."
+      puts "    Generates an accompanying local scan that allows for the"
+      puts "    retrieval of those server scan side results. You can then"
+      puts "    use those results to place local orders through your local"
+      puts "    Interactive Brokers instance."
+      puts
+      puts " mh run every <interval> <path>"
+      puts "   mh run every minute my_first_scan"
+      puts "   mh run every hour my_first_scan"
+      puts "    Adds a local scan script to be run locally"
+      puts
+      puts " mh run remove <match>"
+      puts "   mh run remove my_first_scan"
+      puts "    Removes all scan scripts for running that match."
+      puts
+      puts " mh run all"
+      puts "    Runs all predefined scans at their specified intervals."
+      puts "    Any trades placed via the Market Hackers chart view, will"
+      puts "    be processed as well."
+      puts "    Results printed to STDOUT."
       puts
       puts
-      puts "You can have multiple environments. The :production section contains your live Market Hackers credentials."
-      puts " By setting the MARKETHACKERS_ENV envrionment you can maintain multiple settings for IB in case"
+      puts " You can have multiple environments."
+      puts "    Default is production."
+      puts
+      puts " The :production section contains your live Market Hackers credentials."
+      puts " By setting the MARKETHACKERS_ENV environment you can maintain"
+      puts " multiple settings for Interactive Brokers in the event"
       puts " you want to try out your scans in paper trading mode."
+      puts
+      puts " e.g. export MARKETHACKERS_ENV=test"
+      puts " e.g. export MARKETHACKERS_ENV=production"
       puts
       puts
       puts "Questions? Create an issue: https://github.com/aantix/markethackers-client/issues"
